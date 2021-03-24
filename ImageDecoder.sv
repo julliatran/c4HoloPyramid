@@ -10,6 +10,7 @@ Authors:  Greg M. Crist, Jr. (gmcrist@gmail.com)
 Description:
     Abstracts the data capture of the OV 7670 Camera
 */
+
 `default_nettype none
 
 module ov_7670_capture
