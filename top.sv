@@ -8,7 +8,7 @@ module top
    input  logic [1:0] KEY, // for reset signal, start?
    input logic SCCB_CLK,    // TODO: clock for sccb protocol (100kHz to 400kHz)
    input logic [7:0] GPIO,
-   input HREF, VSYNC, PCLK);  // TODO:
+   input logic HREF, VSYNC, PCLK);  // TODO:
 
   logic pwdn, done;
   ov_7670_init i(.clk(CLOCK_50),      // TODO: System clock for state transitions
@@ -30,6 +30,4 @@ module top
                     .addr(addr),          // address of pixel_data
                     .data_out(data_out),  //
                     .write_en(write_en)); //
-
-
 endmodule
