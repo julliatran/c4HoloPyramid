@@ -49,7 +49,7 @@ module ov_7670_init
                s_iter = 2,
                s_cmd  = 3,
                s_wait = 4;
-
+    // enum logic [2:0] {s_idle=0, s_init=1, s_iter=2, s_cmd=3, s_wait=4} state;
     ov_sccb sccb (
         .clk(clk_sccb),
         .reset(reset),
