@@ -19,13 +19,13 @@ module ov_7670_capture
     input logic vsync,
     input logic href,
     input logic [7:0] data,
-    output logic  [18:0] addr,
-    output logic  [23:0] data_out,
+    output logic  [15:0] addr,
+    output logic  [15:0] data_out,
     output logic  write_en
   );
 
-    logic [15:0] data_reg;
-    logic [18:0] address;
+    logic [31:0] data_reg;
+    logic [15:0] CounterX, CounterY, xPos;
     logic [1:0] line;
     logic [6:0] href_last;
     logic write_en_reg;
@@ -34,16 +34,41 @@ module ov_7670_capture
     logic latched_href;
     logic [7:0] latched_d;
 
-    assign addr     = address;
+    assign addr     = (16'd235 * CounterY) + CounterX;
     assign write_en = write_en_reg;
-    assign data_out = {data_reg[15:12], data_reg[15:12], data_reg[10:7], data_reg[10:7], data_reg[4:1], data_reg[4:1]};
+    logic [4:0] R_p, B_p;
+    logic [5:0] G_p;
+    logic isValidxPos;
 
-    always_ff @(posedge pclk) begin
+    assign data_out = {R_p, G_p, B_p}; //functional RGB565!
+    assign CounterX = (isValidxPos) ? (xPos - 16'd40) : 16'd0;
+
+
+    
+    assign isValidxPos = (xPos <= 16'd275 && xPos >= 16'd40);
+
+
+
+    
+
+    // rgb 565 (this is reading off by one cycle at the moment, not quite sure how to fix)
+    assign R_p = {data_reg[7:3]}; //red channel
+    assign G_p = {data_reg[2:0], data_reg[15:13]}; //green channel 
+    assign B_p = {data_reg[12:8]}; //blue channel
+
+    always_ff @(negedge pclk) begin
         href_hold <= latched_href;
         write_en_reg <= 1'b0;
 
-        if (write_en_reg == 1'b1)
-            address <= address + 1'b1;
+        if (href_hold == 1'b0)
+            xPos <= 16'd0;
+        else if (href_last[0] == 1'b1) begin
+            CounterY <= (xPos == 16'd0) ? (CounterY + 16'd1) : CounterY;
+            xPos <= xPos + 1'b1;
+        end
+
+        //if ((href_last[0] + href_last[1] + href_last[2]) == 1'b1) 
+        //    address <= address + 1'b1;
 
         // detect the rising edge on href - the start of the scan line
         if (href_hold == 1'b0 && latched_href == 1'b1) begin
@@ -57,28 +82,30 @@ module ov_7670_capture
 
         // capturing the data from the camera, 12-bit RGB
         if (latched_href == 1'b1) begin
-            data_reg <= {data_reg[7:0], latched_d};
+            data_reg <= {data_reg[23:0], latched_d};
         end
 
         // Is a new screen about to start (i.e. we have to restart capturing
         if (latched_vsync == 1'b1) begin
-            address      <= 19'd0;
+            xPos      <= 16'd0;
             href_last    <= 7'd0;
             line         <= 2'd0;
+            CounterY <= 16'd0;
         end
         else begin
             // If not, set the write enable whenever we need to capture a pixel
             if (href_last[0] == 1'b1) begin
-                write_en_reg <= 1'b1;
+                write_en_reg <= (isValidxPos);
                 href_last <= 7'd0;
             end
             else begin
                 href_last <= {href_last[5:0], latched_href};
+
             end
         end
     end
 
-    always_ff @(negedge pclk) begin
+    always_ff @(posedge pclk) begin
         latched_d     <= data;
         latched_href  <= href;
         latched_vsync <= vsync;

@@ -28,7 +28,7 @@ Description:
 
 module ov_sccb (
         input logic clk,               // Clock signal
-        input logic reset,             // Reset signal (active-low)
+        input logic reset,             // Reset signal (active-high)
         input logic [11:0] clk_div,    // Clock divider value to configure SDIO_C from system clock
 
         inout  sio_d,            // SCCB data (tri-state)
@@ -82,7 +82,7 @@ module ov_sccb (
     logic s_reset;
 
     always @ (posedge clk) begin
-        if (~reset) begin
+        if (reset) begin
             state <= s_idle;
 
             sccb_clk <= 1'b0;

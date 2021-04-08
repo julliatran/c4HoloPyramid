@@ -71,12 +71,22 @@ module ov_7670_init
 
     always_ff @(posedge clk, posedge reset) begin
     
-        if (~reset) begin
+        if (reset) begin
           state       <= s_init;
           cmd_counter <= 5'd0;
           sccb_start  <= 1'b0;
+          chip_addr   <= 8'b0;
+          sub_addr    <= 8'b0;
+          w_data      <= 8'b0;
         end
         else begin
+          state       <= s_init;
+          cmd_counter <= 5'd0;
+          sccb_start  <= 1'b0;
+          chip_addr   <= 8'b0;
+          sub_addr    <= 8'b0;
+          w_data      <= 8'b0;
+
           case (state)
             s_init: begin
                 state <= s_idle;
@@ -132,6 +142,8 @@ module ov_7670_init
                   34: write_sccb(CHIP_ADDR, 8'hb1, 8'h0c);     // ABLC1    Enable ABLC function. + RSVD bits.
                   35: write_sccb(CHIP_ADDR, 8'hb2, 8'h0e);     // RSVD     ?
                   36: write_sccb(CHIP_ADDR, 8'hb3, 8'h80);     // THL_ST   ALBC Target
+                  //37: write_sccb(CHIP_ADDR, 8'h70, 8'h80);     // SCALING_XSC   test pattern x
+                  //38: write_sccb(CHIP_ADDR, 8'h71, 8'h80);     // SCALING_YSC   test pattern y
 
                   default: state <= s_iter;                    //          Do nothing
                 endcase
